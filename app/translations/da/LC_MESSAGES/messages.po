@@ -1,0 +1,242 @@
+# Danish translations for PROJECT.
+# Copyright (C) 2018 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2018-04-12 14:10+0200\n"
+"PO-Revision-Date: 2018-04-12 12:12+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: da\n"
+"Language-Team: da <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.3\n"
+
+#: app/__init__.py:23
+msgid "Please log in to access this page."
+msgstr "Log ind for at få adgang."
+
+#: app/forms.py:9 app/forms.py:16 app/forms.py:33
+msgid "Username"
+msgstr "Brugernavn"
+
+#: app/forms.py:10 app/forms.py:18 app/forms.py:65
+msgid "Password"
+msgstr "Kodeord"
+
+#: app/forms.py:11
+msgid "Remember Me"
+msgstr "Husk Mig"
+
+#: app/forms.py:12 app/templates/login.html:5
+msgid "Sign In"
+msgstr "Log ind"
+
+#: app/forms.py:17 app/forms.py:34 app/forms.py:60
+msgid "Email"
+msgstr "Email"
+
+#: app/forms.py:19 app/forms.py:67
+msgid "Repeat Password"
+msgstr "Gentag Kodeord"
+
+#: app/forms.py:20 app/templates/register.html:5
+msgid "Register"
+msgstr "Registrer"
+
+#: app/forms.py:35
+msgid "About me"
+msgstr "Om Mig"
+
+#: app/forms.py:36
+msgid "Submit"
+msgstr "Send"
+
+#: app/forms.py:54
+msgid "Say something"
+msgstr "Sig noget"
+
+#: app/forms.py:61 app/forms.py:68
+msgid "Request Password Reset"
+msgstr "Anmod om at nulstille kodeord"
+
+#: app/routes.py:25
+msgid "Your post is now live!"
+msgstr "Din besked er nu live!"
+
+#: app/routes.py:45
+msgid "You are already logged in"
+msgstr "Du er allerede logget ind"
+
+#: app/routes.py:52
+msgid "Invalid username or password"
+msgstr "Ugyldigt brugernavn eller kodeord"
+
+#: app/routes.py:71
+msgid "You are already signed in."
+msgstr "Du er allerede logget ind."
+
+#: app/routes.py:79
+msgid "Congratulations, you are now a registered user!"
+msgstr "Tillykke, du er nu en registreret bruger!"
+
+#: app/routes.py:113
+msgid "Your changes have been saved."
+msgstr "Dine ændringer er blevet gemt."
+
+#: app/routes.py:127 app/routes.py:143
+#, python-format
+msgid "User %(username)s not found."
+msgstr "Brugeren %(username)s blev ikke fundet."
+
+#: app/routes.py:130
+msgid "You cannot follow yourself!"
+msgstr "Du kan ikke følge dig selv."
+
+#: app/routes.py:174
+msgid "You are already logged in."
+msgstr "Du er allerede logget ind."
+
+#: app/routes.py:181
+msgid "Check your email for the instructions to reset your password"
+msgstr "Check din email for instruktioner om at nulstille dit kodeord"
+
+#: app/routes.py:199
+msgid "Your password has been reset."
+msgstr "Dit kodeord er blevet ændret."
+
+#: app/translate.py:9
+msgid "Error: the translation service is not configured."
+msgstr ""
+
+#: app/translate.py:16
+msgid "Error: the translation service failed."
+msgstr ""
+
+#: app/templates/404.html:4
+msgid "File Not Found"
+msgstr "Filen blev ikke fundet"
+
+#: app/templates/404.html:5 app/templates/500.html:6
+msgid "Back"
+msgstr "Tilbage"
+
+#: app/templates/500.html:4
+msgid "An unexpected error has occurred"
+msgstr "En unventet fejl er forekommet"
+
+#: app/templates/500.html:5
+msgid "The administrator has been notified. Sorry for the inconvenience!"
+msgstr "Administratoren er blevet notificeret. Beklager ulejligheden!"
+
+#: app/templates/_post.html:14
+#, python-format
+msgid "%(username)s said %(when)s"
+msgstr "%(username)s sagde %(when)s"
+
+#: app/templates/_post.html:24
+msgid "Translate"
+msgstr ""
+
+#: app/templates/base.html:5
+msgid "Welcome to Microblog"
+msgstr "Velkommen til Microblog"
+
+#: app/templates/base.html:19
+msgid "Microblog"
+msgstr "Microblog"
+
+#: app/templates/base.html:23
+msgid "Home"
+msgstr "Hjem"
+
+#: app/templates/base.html:24
+msgid "Explore"
+msgstr "Udforsk"
+
+#: app/templates/base.html:28
+msgid "Login"
+msgstr "Log ind"
+
+#: app/templates/base.html:30
+msgid "Profile"
+msgstr "Profil"
+
+#: app/templates/base.html:31
+msgid "Logout"
+msgstr "Log ud"
+
+#: app/templates/base.html:67
+msgid "Error: Could not contact server."
+msgstr ""
+
+#: app/templates/edit_profile.html:5
+msgid "Edit Profile"
+msgstr "Rediger profil"
+
+#: app/templates/index.html:5
+msgid "Hi"
+msgstr "Hej"
+
+#: app/templates/index.html:17 app/templates/user.html:31
+msgid "Newer posts"
+msgstr "Nyere beskeder"
+
+#: app/templates/index.html:22 app/templates/user.html:36
+msgid "Older posts"
+msgstr "Ældre beskeder"
+
+#: app/templates/login.html:12
+msgid "New User?"
+msgstr "Ny bruger?"
+
+#: app/templates/login.html:12
+msgid "Click to Register!"
+msgstr "Klik for at registrere"
+
+#: app/templates/login.html:14
+msgid "Forgot Your Password?"
+msgstr "Glemt dit kodeord?"
+
+#: app/templates/login.html:15
+msgid "Click to Reset It"
+msgstr "Tryk for at nulstille det"
+
+#: app/templates/reset_password.html:5
+msgid "Reset Your Password"
+msgstr "Nulstil dit kodeord"
+
+#: app/templates/reset_password_request.html:5
+msgid "Reset Password"
+msgstr "Nulstil kodeord"
+
+#: app/templates/user.html:11
+msgid "Last seen on:"
+msgstr "Sidst set"
+
+#: app/templates/user.html:13
+msgid "followers"
+msgstr "følgere"
+
+#: app/templates/user.html:13
+msgid "following."
+msgstr "følger"
+
+#: app/templates/user.html:15
+msgid "Edit your profile"
+msgstr "Rediger din profil"
+
+#: app/templates/user.html:17
+msgid "Follow"
+msgstr "Følg"
+
+#: app/templates/user.html:19
+msgid "Unfollow"
+msgstr "Stop med at følge"
+

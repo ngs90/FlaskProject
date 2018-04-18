@@ -26,5 +26,7 @@ class Config(object):
 
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') #Where is elastic search hosted
 
+    LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
+
 if __name__ == '__main__':
     print(basedir)

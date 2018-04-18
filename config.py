@@ -23,6 +23,7 @@ class Config(object):
     LANGUAGES = ['en', 'dk'] #pybabel languages supported
 
     MS_TRANSLATOR_KEY = os.environ.get('MS_TRANSLATOR_KEY') #Microsoft Azure text translator key
+    print(MS_TRANSLATOR_KEY)
 
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') #Where is elastic search hosted
 

@@ -55,6 +55,7 @@ def role_required(*role_args):
     def wrapper(f):
         @wraps(f)
         def decorated_view(*args,**kwargs):
+            print('Checking user roles')
             role = [str(x) for x in current_user.get_role()]
             for role_arg in role_args:
                 if str(role_arg) not in role:

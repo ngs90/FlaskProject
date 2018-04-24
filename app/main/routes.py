@@ -9,8 +9,9 @@ from app.models import User, Post
 from app.translate import translate
 from app.main import bp
 
-@bp.route('/', methods=['GET','POST'])
-@bp.route('/index', methods=['GET','POST'])
+
+@bp.route('/', methods=['GET', 'POST'])
+@bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
     form = PostForm()
@@ -31,7 +32,7 @@ def index():
     prev_url = url_for('main.index', page=posts.prev_num) \
         if posts.has_prev else None
     return render_template('index.html',
-                           title = 'Home Page',
+                           title='Home Page',
                            form=form,
                            posts=posts.items,
                            next_url=next_url,
@@ -155,4 +156,5 @@ def search():
 def user_popup(username):
     user = User.query.filter_by(username=username).first_or_404()
     return render_template('user_popup.html', user=user)
+
 

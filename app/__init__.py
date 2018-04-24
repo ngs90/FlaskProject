@@ -12,19 +12,29 @@ from flask_migrate import Migrate
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from elasticsearch import Elasticsearch
-
 from config import Config
+#from flask.ext.pagedown import PageDown
+from flask_pagedown import PageDown
+from flaskext.markdown import Markdown
+import cloudinary
+from mdx_cloudinary.extension import CloudinaryImageExtension
+
+
+
 
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
-login.login_view = 'auth.login' #page being redirected to if trying to acess page that needs user to be logged in.
+login.login_view = 'auth.login'  # Page being redirected to if trying to acess page that needs user to be logged in.
 login.login_message = _l('Please log in to access this page.')
 mail = Mail()
 bootstrap = Bootstrap()
-moment = Moment() # JavaScript library
+moment = Moment()  # JavaScript library
 babel = Babel()
+pagedown = PageDown()
 
+
+from app import models
 
 def create_app(config_class=Config):
     app = Flask(__name__)  # Creating Flask object as an intance
@@ -39,6 +49,8 @@ def create_app(config_class=Config):
     babel.init_app(app)
     app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
         if app.config['ELASTICSEARCH_URL'] else None
+    pagedown.init_app(app)
+    Markdown(app, extensions=['mdx_math', 'codehilite', 'fenced_code', CloudinaryImageExtension(), 'video'])
 
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
@@ -46,8 +58,12 @@ def create_app(config_class=Config):
     from app.auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
+    from app.blog import bp as blog_bp
+    app.register_blueprint(blog_bp, url_prefix='/blog')
+
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
+
 
     if not app.debug and not app.testing: #logging setup
         if app.config['MAIL_SERVER']:
@@ -88,6 +104,3 @@ def create_app(config_class=Config):
 def get_locale():
     #return request.accept_languages.best_match(app.config['LANGUAGES'])
     return 'da'
-
-
-from app import models

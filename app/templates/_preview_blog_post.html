@@ -6,16 +6,16 @@
 
                 {% set user_link %}
                     <span class="user_popup">
-                        <a href="{{ url_for('main.user', username=blog_post.blog_author.username) }}">
-                            {{ blog_post.blog_author.username }}
+                        <a href="{{ url_for('main.user', username=current_user.username) }}">
+                            {{ current_user.username }}
                         </a>
                     </span>
                  {% endset %}
                 <i>
-                    {{ _('Written by %(username)s on %(when)s', username=user_link, when=moment(blog_post.timestamp).format('MMMM Do YYYY')) }}:
+                    {{ _('Written by %(username)s on %(when)s', username=user_link, when=moment().format('MMMM Do YYYY')) }}:
                 </i>
                 <br>
-                <span id="post{{ blog_post.id }}">{{ blog_post.content|markdown }}</span>
+                <span id="preview">{{ blog_post.content | markdown }}</span>
                 {% if blog_post.language and blog_post.language != g.locale %}
                 <br><br>
                 <span id="translation{{ blog_post.id }}">

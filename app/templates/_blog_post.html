@@ -1,10 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+    <table class="table table-hover">
+        <tr>
+            <td>
+
+                    <a href="{{ url_for('blog.show_blog_post', slug=post.slug) }}"> <h3>{{ post.title }}</h3>
+                    </a>
+                <br>
+
+                {% set user_link %}
+                    <span class="user_popup">
+                        <a href="{{ url_for('main.user', username=post.blog_author.username) }}">
+                            {{ post.blog_author.username }}
+                        </a>
+                    </span>
+                 {% endset %}
+                <i>
+                    {{ _('Written by %(username)s on %(when)s', username=user_link, when=moment(post.timestamp).format('MMMM Do YYYY')) }}:
+                </i>
+                <br>
+                <span id="post{{ post.id }}">{{ post.content | truncate(150) }}</span>
+                {% if post.language and post.language != g.locale %}
+                <br><br>
+                <span id="translation{{ post.id }}">
+                    <a href="javascript:translate(
+                                '#post{{ post.id }}',
+                                '#translation{{ post.id }}',
+                                '{{ post.language }}',
+                                '{{ g.locale }}');">{{ _('Translate') }}</a>
+                </span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>

@@ -1,0 +1,1017 @@
+warning: LF will be replaced by CRLF in migrations/alembic.ini.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in migrations/env.py.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in migrations/script.py.mako.
+The file will have its original line endings in your working directory.
+[1mdiff --git a/app/__init__.py b/app/__init__.py[m
+[1mindex 29e38b3..7ecc1b5 100644[m
+[1m--- a/app/__init__.py[m
+[1m+++ b/app/__init__.py[m
+[36m@@ -12,19 +12,29 @@[m [mfrom flask_migrate import Migrate[m
+ from flask_moment import Moment[m
+ from flask_sqlalchemy import SQLAlchemy[m
+ from elasticsearch import Elasticsearch[m
+[31m-[m
+ from config import Config[m
+[32m+[m[32m#from flask.ext.pagedown import PageDown[m
+[32m+[m[32mfrom flask_pagedown import PageDown[m
+[32m+[m[32mfrom flaskext.markdown import Markdown[m
+[32m+[m[32mimport cloudinary[m
+[32m+[m[32mfrom mdx_cloudinary.extension import CloudinaryImageExtension[m
+[32m+[m
+[32m+[m
+[32m+[m
+ [m
+ db = SQLAlchemy()[m
+ migrate = Migrate()[m
+ login = LoginManager()[m
+[31m-login.login_view = 'auth.login' #page being redirected to if trying to acess page that needs user to be logged in.[m
+[32m+[m[32mlogin.login_view = 'auth.login'  # Page being redirected to if trying to acess page that needs user to be logged in.[m
+ login.login_message = _l('Please log in to access this page.')[m
+ mail = Mail()[m
+ bootstrap = Bootstrap()[m
+[31m-moment = Moment() # JavaScript library[m
+[32m+[m[32mmoment = Moment()  # JavaScript library[m
+ babel = Babel()[m
+[32m+[m[32mpagedown = PageDown()[m
+[32m+[m
+ [m
+[32m+[m[32mfrom app import models[m
+ [m
+ def create_app(config_class=Config):[m
+     app = Flask(__name__)  # Creating Flask object as an intance[m
+[36m@@ -39,6 +49,8 @@[m [mdef create_app(config_class=Config):[m
+     babel.init_app(app)[m
+     app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \[m
+         if app.config['ELASTICSEARCH_URL'] else None[m
+[32m+[m[32m    pagedown.init_app(app)[m
+[32m+[m[32m    Markdown(app, extensions=['mdx_math', 'codehilite', 'fenced_code', CloudinaryImageExtension(), 'video'])[m
+ [m
+     from app.errors import bp as errors_bp[m
+     app.register_blueprint(errors_bp)[m
+[36m@@ -46,9 +58,13 @@[m [mdef create_app(config_class=Config):[m
+     from app.auth import bp as auth_bp[m
+     app.register_blueprint(auth_bp, url_prefix='/auth')[m
+ [m
+[32m+[m[32m    from app.blog import bp as blog_bp[m
+[32m+[m[32m    app.register_blueprint(blog_bp, url_prefix='/blog')[m
+[32m+[m
+     from app.main import bp as main_bp[m
+     app.register_blueprint(main_bp)[m
+ [m
+[32m+[m
+     if not app.debug and not app.testing: #logging setup[m
+         if app.config['MAIL_SERVER']:[m
+             auth = None[m
+[36m@@ -88,6 +104,3 @@[m [mdef create_app(config_class=Config):[m
+ def get_locale():[m
+     #return request.accept_languages.best_match(app.config['LANGUAGES'])[m
+     return 'da'[m
+[31m-[m
+[31m-[m
+[31m-from app import models[m
+\ No newline at end of file[m
+[1mdiff --git a/app/auth/forms.py b/app/auth/forms.py[m
+[1mindex fa22e0e..d67c453 100644[m
+[1m--- a/app/auth/forms.py[m
+[1m+++ b/app/auth/forms.py[m
+[36m@@ -4,6 +4,7 @@[m [mfrom wtforms.validators import (ValidationError, DataRequired, Email, EqualTo)[m
+ from app.models import User[m
+ from flask_babel import _, lazy_gettext as _l[m
+ [m
+[32m+[m
+ class LoginForm(FlaskForm):[m
+     username = StringField(_l('Username'), validators=[DataRequired()])[m
+     password = PasswordField(_l('Password'), validators=[DataRequired()])[m
+[36m@@ -18,7 +19,7 @@[m [mclass RegistrationForm(FlaskForm):[m
+     password2 = PasswordField(_l('Repeat Password'), validators=[DataRequired(), EqualTo('password')])[m
+     submit = SubmitField(_l('Register'))[m
+ [m
+[31m-    def validate_username(self, username): #names that starts with validate_<field_name> are invoked as additional validators by the WTForms[m
+[32m+[m[32m    def validate_username(self, username):  # Names that starts with validate_<field_name> are invoked as additional validators by the WTForms[m
+         user = User.query.filter_by(username=username.data).first()[m
+         if user is not None:[m
+             raise ValidationError(_('Please use a different username.'))[m
+[36m@@ -38,4 +39,5 @@[m [mclass ResetPasswordForm(FlaskForm):[m
+     password = PasswordField(_l('Password'), validators=[DataRequired()])[m
+     password2 = PasswordField([m
+         _l('Repeat Password'), validators=[DataRequired(), EqualTo('password')])[m
+[31m-    submit = SubmitField(_l('Request Password Reset'))[m
+\ No newline at end of file[m
+[32m+[m[32m    submit = SubmitField(_l('Request Password Reset'))[m
+[41m+[m
+[1mdiff --git a/app/blog/__init__.py b/app/blog/__init__.py[m
+[1mindex e69de29..8de3624 100644[m
+[1m--- a/app/blog/__init__.py[m
+[1m+++ b/app/blog/__init__.py[m
+[36m@@ -0,0 +1,5 @@[m
+[32m+[m[32mfrom flask import Blueprint[m
+[32m+[m
+[32m+[m[32mbp = Blueprint('blog', __name__)[m
+[32m+[m
+[32m+[m[32mfrom app.blog import routes[m
+[1mdiff --git a/app/blog/forms.py b/app/blog/forms.py[m
+[1mindex e69de29..eca4c76 100644[m
+[1m--- a/app/blog/forms.py[m
+[1m+++ b/app/blog/forms.py[m
+[36m@@ -0,0 +1,30 @@[m
+[32m+[m[32mfrom app import db[m
+[32m+[m[32mfrom wtforms import (StringField, SubmitField, TextAreaField, BooleanField)[m
+[32m+[m[32mfrom wtforms.validators import (DataRequired)[m
+[32m+[m[32mfrom flask_babel import lazy_gettext as _l[m
+[32m+[m[32mfrom wtforms_alchemy import Unique[m
+[32m+[m[32mimport re[m
+[32m+[m[32mfrom app.models import BlogPost[m
+[32m+[m[32mfrom flask_wtf import FlaskForm[m
+[32m+[m[32mfrom flask_pagedown.fields import PageDownField[m
+[32m+[m
+[32m+[m[32mclass BlogPostForm(FlaskForm):[m
+[32m+[m[32m    title = StringField(_l('Title'), validators=[DataRequired()])  # , Unique(BlogPost.title)[m
+[32m+[m[32m    slug = StringField(_l('Slug'), validators=[DataRequired()])  # , Unique(BlogPost.slug)[m
+[32m+[m[32m    #content = TextAreaField(_l('Blog post'), validators=[DataRequired()]) #markdown format[m
+[32m+[m[32m    content = PageDownField(_l('Blog post'),[m
+[32m+[m[32m                            validators=[DataRequired()],[m
+[32m+[m[32m                            render_kw={"rows": 12}) #markdown supported[m
+[32m+[m[32m    published = BooleanField(_l('Publish?'))[m
+[32m+[m[32m    submit = SubmitField(_l('Submit'))[m
+[32m+[m[32m    preview = SubmitField(_l('Preview (with equations)'))[m
+[32m+[m
+[32m+[m[32m    def save(self, *args, **kwargs):[m
+[32m+[m[32m        if not self.slug:[m
+[32m+[m[32m            self.slug = re.sub('[^\w]+', '-', self.title.lower())[m
+[32m+[m[32m        ret = super(BlogPost, self).save(*args, **kwargs)[m
+[32m+[m[32m        return ret[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[1mdiff --git a/app/blog/routes.py b/app/blog/routes.py[m
+[1mindex e69de29..d0bc44d 100644[m
+[1m--- a/app/blog/routes.py[m
+[1m+++ b/app/blog/routes.py[m
+[36m@@ -0,0 +1,109 @@[m
+[32m+[m[32mfrom datetime import datetime[m
+[32m+[m[32mfrom flask import (render_template, flash, redirect, url_for, request, g, jsonify, current_app)  # g for storing arbitrary attributes[m
+[32m+[m[32mfrom flask_babel import (_, get_locale)[m
+[32m+[m[32mfrom flask_login import (current_user, login_required)[m
+[32m+[m[32mfrom guess_language import guess_language[m
+[32m+[m[32mfrom app import db[m
+[32m+[m[32mfrom app.blog.forms import BlogPostForm[m
+[32m+[m[32mfrom app.main.forms import PostForm[m
+[32m+[m[32mfrom app.models import BlogPost, Post, role_required[m
+[32m+[m
+[32m+[m
+[32m+[m[32mfrom app.blog import bp[m
+[32m+[m[32mimport urllib[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@bp.route('/post', methods=['GET', 'POST'])[m
+[32m+[m[32m@login_required[m
+[32m+[m[32m@role_required('admin', 'user')[m
+[32m+[m[32mdef blog_post():[m
+[32m+[m[32m    form = BlogPostForm()[m
+[32m+[m
+[32m+[m[32m    if form.validate_on_submit():[m
+[32m+[m[32m        if form.submit.data:[m
+[32m+[m[32m            language = guess_language(form.content.data)[m
+[32m+[m[32m            if language == 'UNKNOWN' or len(language) > 5:[m
+[32m+[m[32m                language = ''[m
+[32m+[m[32m            print('current user is:',current_user)[m
+[32m+[m[32m            post = BlogPost(title=form.title.data,[m
+[32m+[m[32m                            slug=form.slug.data,[m
+[32m+[m[32m                            content=form.content.data,[m
+[32m+[m[32m                            blog_author=current_user,[m
+[32m+[m[32m                            language=language)[m
+[32m+[m[32m            print(post)[m
+[32m+[m[32m            db.session.add(post)[m
+[32m+[m[32m            db.session.commit()[m
+[32m+[m[32m            flash(_('Your blog post is now live!'))[m
+[32m+[m[32m            return redirect(url_for('blog.blog'))[m
+[32m+[m[32m        elif form.preview.data:[m
+[32m+[m[32m            return render_template('blog/blog_post.html',[m
+[32m+[m[32m                                   title='Blog Posts',[m
+[32m+[m[32m                                   form=form,[m
+[32m+[m[32m                                   preview=True,[m
+[32m+[m[32m                                   blog_post=form.data[m
+[32m+[m[32m                                   )[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    #page = request.args.get('page', 1, type=int)[m
+[32m+[m[32m    #posts = current_user.followed_posts().paginate([m
+[32m+[m[32m    #    page, current_app.config['POSTS_PER_PAGE'], False)[m
+[32m+[m[32m    #next_url = url_for('main.index', page=posts.next_num) \[m
+[32m+[m[32m    #    if posts.has_next else None[m
+[32m+[m[32m    #prev_url = url_for('main.index', page=posts.prev_num) \[m
+[32m+[m[32m    #    if posts.has_prev else None[m
+[32m+[m
+[32m+[m[32m    return render_template('blog/blog_post.html',[m
+[32m+[m[32m                           title='Blog Posts',[m
+[32m+[m[32m                           form=form)[m
+[32m+[m
+[32m+[m[32m@bp.route('/', methods=['GET', 'POST'])[m
+[32m+[m[32m@login_required[m
+[32m+[m[32mdef blog():[m
+[32m+[m[32m    page = request.args.get('page', 1, type=int)[m
+[32m+[m[32m    posts = BlogPost.query.order_by(BlogPost.timestamp.desc()).paginate([m
+[32m+[m[32m        page, current_app.config['BLOG_POSTS_PER_PAGE'], False)[m
+[32m+[m[32m    next_url = url_for('blog.blog', page=posts.next_num) \[m
+[32m+[m[32m        if posts.has_next else None[m
+[32m+[m[32m    prev_url = url_for('blog.blog', page=posts.prev_num) \[m
+[32m+[m[32m        if posts.has_prev else None[m
+[32m+[m[32m    return render_template('blog/blog.html',[m
+[32m+[m[32m                           title='Blog',[m
+[32m+[m[32m                           posts=posts.items,[m
+[32m+[m[32m                           next_url=next_url,[m
+[32m+[m[32m                           prev_url=prev_url)[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@bp.route('/<slug>', methods=['GET', 'POST'])[m
+[32m+[m[32m@login_required[m
+[32m+[m[32mdef show_blog_post(slug):[m
+[32m+[m[32m    blog_post = BlogPost.query.filter_by(slug=slug).first()[m
+[32m+[m[32m    page = request.args.get('page', 1, type=int)[m
+[32m+[m[32m    comments = Post.query.filter_by(blogpost_id=blog_post.id).order_by(Post.timestamp.desc()).paginate([m
+[32m+[m[32m            page, current_app.config['POSTS_PER_PAGE'], False)[m
+[32m+[m[32m    next_url = url_for('blog.show_blog_post', page=comments.next_num, slug=slug) \[m
+[32m+[m[32m        if comments.has_next else None[m
+[32m+[m[32m    prev_url = url_for('blog.show_blog_post', page=comments.prev_num, slug=slug) \[m
+[32m+[m[32m        if comments.has_prev else None[m
+[32m+[m
+[32m+[m[32m    form = PostForm()[m
+[32m+[m[32m    if form.validate_on_submit():[m
+[32m+[m[32m        language = guess_language(form.post.data)[m
+[32m+[m[32m        if language == 'UNKNOWN' or len(language) > 5:[m
+[32m+[m[32m            language = ''[m
+[32m+[m[32m        post = Post(body=form.post.data,[m
+[32m+[m[32m                    author=current_user,[m
+[32m+[m[32m                    language=language,[m
+[32m+[m[32m                    blogpost_id=blog_post.id)[m
+[32m+[m[32m        db.session.add(post)[m
+[32m+[m[32m        db.session.commit()[m
+[32m+[m[32m        flash(_('Your blog post has been added.'))[m
+[32m+[m[32m        return redirect(url_for('blog.show_blog_post', slug=slug))[m
+[32m+[m
+[32m+[m[32m    return render_template('blog/show_blog_post.html',[m
+[32m+[m[32m                           blog_post=blog_post,[m
+[32m+[m[32m                           posts=comments.items,[m
+[32m+[m[32m                           form=form,[m
+[32m+[m[32m                           next_url=next_url,[m
+[32m+[m[32m                           prev_url=prev_url[m
+[32m+[m[32m                           )[m
+[32m+[m
+[1mdiff --git a/app/main/routes.py b/app/main/routes.py[m
+[1mindex 495ec7b..6922bdb 100644[m
+[1m--- a/app/main/routes.py[m
+[1m+++ b/app/main/routes.py[m
+[36m@@ -9,8 +9,9 @@[m [mfrom app.models import User, Post[m
+ from app.translate import translate[m
+ from app.main import bp[m
+ [m
+[31m-@bp.route('/', methods=['GET','POST'])[m
+[31m-@bp.route('/index', methods=['GET','POST'])[m
+[32m+[m
+[32m+[m[32m@bp.route('/', methods=['GET', 'POST'])[m
+[32m+[m[32m@bp.route('/index', methods=['GET', 'POST'])[m
+ @login_required[m
+ def index():[m
+     form = PostForm()[m
+[36m@@ -31,7 +32,7 @@[m [mdef index():[m
+     prev_url = url_for('main.index', page=posts.prev_num) \[m
+         if posts.has_prev else None[m
+     return render_template('index.html',[m
+[31m-                           title = 'Home Page',[m
+[32m+[m[32m                           title='Home Page',[m
+                            form=form,[m
+                            posts=posts.items,[m
+                            next_url=next_url,[m
+[36m@@ -156,3 +157,4 @@[m [mdef user_popup(username):[m
+     user = User.query.filter_by(username=username).first_or_404()[m
+     return render_template('user_popup.html', user=user)[m
+ [m
+[41m+[m
+[1mdiff --git a/app/models.py b/app/models.py[m
+[1mindex f6a0912..8c30053 100644[m
+[1m--- a/app/models.py[m
+[1m+++ b/app/models.py[m
+[36m@@ -2,11 +2,12 @@[m [mfrom datetime import datetime[m
+ from app import (db, login)[m
+ from flask import current_app[m
+ from werkzeug.security import (generate_password_hash, check_password_hash)[m
+[31m-from flask_login import UserMixin[m
+[32m+[m[32mfrom flask_login import UserMixin, current_user[m
+ from hashlib import md5[m
+ from time import time[m
+ import jwt[m
+ from app.search import add_to_index, remove_from_index, query_index[m
+[32m+[m[32mfrom functools import wraps[m
+ [m
+ class SearchableMixin(object):[m
+     @classmethod[m
+[36m@@ -43,21 +44,54 @@[m [mclass SearchableMixin(object):[m
+         for obj in cls.query:[m
+             add_to_index(cls.__tablename__, obj)[m
+ [m
+[32m+[m
+ followers = db.Table('followers',[m
+     db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),[m
+     db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))[m
+ )[m
+ [m
+ [m
+[32m+[m[32mdef role_required(*role_args):[m
+[32m+[m[32m    def wrapper(f):[m
+[32m+[m[32m        @wraps(f)[m
+[32m+[m[32m        def decorated_view(*args,**kwargs):[m
+[32m+[m[32m            role = [str(x) for x in current_user.get_role()][m
+[32m+[m[32m            for role_arg in role_args:[m
+[32m+[m[32m                if str(role_arg) not in role:[m
+[32m+[m[32m                    return current_app.login_manager.unauthorized()[m
+[32m+[m[32m            return f(*args, **kwargs)[m
+[32m+[m[32m        return decorated_view[m
+[32m+[m[32m    return wrapper[m
+[32m+[m
+[32m+[m[32mclass Role(db.Model):[m
+[32m+[m[32m    __tablename__ = 'role'[m
+[32m+[m[32m    id = db.Column(db.Integer(), primary_key=True)[m
+[32m+[m[32m    name = db.Column(db.String(50), unique=True)[m
+[32m+[m
+[32m+[m[32m    def __repr__(self):[m
+[32m+[m[32m        #return '<Role {}>'.format(self.name)[m
+[32m+[m[32m        return self.name[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass UserRole(db.Model):[m
+[32m+[m[32m    __tablename__ = 'user_role'[m
+[32m+[m[32m    id = db.Column(db.Integer(), primary_key=True)[m
+[32m+[m[32m    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))[m
+[32m+[m[32m    role_id = db.Column(db.Integer(), db.ForeignKey('role.id', ondelete='CASCADE'))[m
+[32m+[m
+[32m+[m
+ class User(UserMixin, db.Model):[m
+[31m-    __table_args__ = {'extend_existing': True} #Didn't work witout this, could be error with package:  https://stackoverflow.com/questions/27812250/sqlalchemy-inheritance-not-working and https://github.com/mitsuhiko/flask-sqlalchemy/issues/478[m
+[32m+[m[32m    __table_args__ = {'extend_existing': True}  # Didn't work witout this, could be error with package:  https://stackoverflow.com/questions/27812250/sqlalchemy-inheritance-not-working and https://github.com/mitsuhiko/flask-sqlalchemy/issues/478[m
+     id = db.Column(db.Integer, index=True, primary_key=True)[m
+     username = db.Column(db.String(64), index=True, unique=True)[m
+     email = db.Column(db.String(120), index=True, unique=True)[m
+     password_hash = db.Column(db.String(128))[m
+     posts = db.relationship('Post', backref='author', lazy='dynamic')[m
+[32m+[m[32m    blog_posts = db.relationship('BlogPost', backref='blog_author', lazy='dynamic')[m
+     about_me = db.Column(db.String(140))[m
+     last_seen = db.Column(db.DateTime, default=datetime.utcnow)[m
+[32m+[m[32m    role = db.relationship('Role', secondary='user_role')[m
+ [m
+     followed = db.relationship([m
+         'User', secondary=followers,[m
+[36m@@ -65,7 +99,6 @@[m [mclass User(UserMixin, db.Model):[m
+         secondaryjoin=(followers.c.followed_id == id),[m
+         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')[m
+ [m
+[31m-[m
+     def __repr__(self):[m
+         return '<User {}>'.format(self.username)[m
+ [m
+[36m@@ -99,6 +132,10 @@[m [mclass User(UserMixin, db.Model):[m
+         own = Post.query.filter_by(user_id=self.id)[m
+         return followed.union(own).order_by(Post.timestamp.desc())[m
+ [m
+[32m+[m[32m    def get_role(self):[m
+[32m+[m[32m        return self.role[m
+[32m+[m
+[32m+[m
+     def get_reset_password_token(self, expires_in=600):[m
+         return jwt.encode([m
+             {'reset_password': self.id, 'exp': time() + expires_in},[m
+[36m@@ -119,13 +156,31 @@[m [mdef load_user(id):[m
+     return User.query.get(int(id))[m
+ [m
+ [m
+[32m+[m[32mclass BlogPost(db.Model):[m
+[32m+[m[32m    __searchable__ = ['content'][m
+[32m+[m[32m    __table_args__ = {'extend_existing': True}[m
+[32m+[m[32m    id = db.Column(db.Integer, primary_key=True)[m
+[32m+[m[32m    title = db.Column(db.String(250))[m
+[32m+[m[32m    slug = db.Column(db.String(250))[m
+[32m+[m[32m    content = db.Column(db.String(250))[m
+[32m+[m[32m    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Foreign key in the user table.[m
+[32m+[m[32m    blog_comment = db.relationship('Post', backref='blog_post', lazy='dynamic') #NOTICE! that the class-tabel BlogPost in the Foreign key statement is referred to as blog_post, i.e. capital letters after first is convert to _lowercase and initial letter is converted to lowercase (without the underscore)[m
+[32m+[m[32m    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)[m
+[32m+[m[32m    published = db.Column(db.Boolean, default=True)[m
+[32m+[m[32m    language = db.Column(db.String(5))[m
+[32m+[m
+[32m+[m[32m    def __repr__(self):[m
+[32m+[m[32m        return '<BlogPost {}>'.format(self.content)[m
+[32m+[m
+[32m+[m
+ class Post(SearchableMixin, db.Model):[m
+     __searchable__ = ['body'][m
+[31m-    __table_args__ = {'extend_existing': True} #Didn't work witout this, could be error with package:  https://stackoverflow.com/questions/27812250/sqlalchemy-inheritance-not-working and https://github.com/mitsuhiko/flask-sqlalchemy/issues/478[m
+[32m+[m[32m    __table_args__ = {'extend_existing': True}  # Didn't work witout this, could be error with package:  https://stackoverflow.com/questions/27812250/sqlalchemy-inheritance-not-working and https://github.com/mitsuhiko/flask-sqlalchemy/issues/478[m
+     id = db.Column(db.Integer, primary_key=True)[m
+     body = db.Column(db.String(140))[m
+     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)[m
+[31m-    user_id = db.Column(db.Integer, db.ForeignKey('user.id')) #Foreeign key in the user table.[m
+[32m+[m[32m    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Foreign key in the user table.[m
+[32m+[m[32m    blogpost_id = db.Column(db.Integer, db.ForeignKey('blog_post.id'))  # Foreign key in the user table.[m
+     language = db.Column(db.String(5))[m
+ [m
+     def __repr__(self):[m
+[36m@@ -134,8 +189,11 @@[m [mclass Post(SearchableMixin, db.Model):[m
+ db.event.listen(db.session, 'before_commit', Post.before_commit)[m
+ db.event.listen(db.session, 'after_commit', Post.after_commit)[m
+ [m
+[32m+[m[32m#db.event.listen(db.session, 'before_commit', BlogPost.before_commit)[m
+[32m+[m[32m#db.event.listen(db.session, 'after_commit', BlogPost.after_commit)[m
+ [m
+ [m
+ if __name__ == '__main__':[m
+[31m-    u = User(username='lala',email='lala@example.com')[m
+[31m-    print(u)[m
+\ No newline at end of file[m
+[32m+[m[32m    u = User(username='lala', email='lala@example.com')[m
+[32m+[m[32m    print(u)[m
+[41m+[m
+[1mdiff --git a/app/templates/_blog_post.html b/app/templates/_blog_post.html[m
+[1mindex f7e5884..42da419 100644[m
+[1m--- a/app/templates/_blog_post.html[m
+[1m+++ b/app/templates/_blog_post.html[m
+[36m@@ -1,10 +1,33 @@[m
+[31m-<!DOCTYPE html>[m
+[31m-<html lang="en">[m
+[31m-<head>[m
+[31m-    <meta charset="UTF-8">[m
+[31m-    <title>$Title$</title>[m
+[31m-</head>[m
+[31m-<body>[m
+[31m-$END$[m
+[31m-</body>[m
+[31m-</html>[m
+\ No newline at end of file[m
+[32m+[m[32m    <table class="table table-hover">[m
+[32m+[m[32m        <tr>[m
+[32m+[m[32m            <td>[m
+[32m+[m
+[32m+[m[32m                    <a href="{{ url_for('blog.show_blog_post', slug=post.slug) }}"> <h3>{{ post.title }}</h3>[m
+[32m+[m[32m                    </a>[m
+[32m+[m[32m                <br>[m
+[32m+[m
+[32m+[m[32m                {% set user_link %}[m
+[32m+[m[32m                    <span class="user_popup">[m
+[32m+[m[32m                        <a href="{{ url_for('main.user', username=post.blog_author.username) }}">[m
+[32m+[m[32m                            {{ post.blog_author.username }}[m
+[32m+[m[32m                        </a>[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                 {% endset %}[m
+[32m+[m[32m                <i>[m
+[32m+[m[32m                    {{ _('Written by %(username)s on %(when)s', username=user_link, when=moment(post.timestamp).format('MMMM Do YYYY')) }}:[m
+[32m+[m[32m                </i>[m
+[32m+[m[32m                <br>[m
+[32m+[m[32m                <span id="post{{ post.id }}">{{ post.content | truncate(150) }}</span>[m
+[32m+[m[32m                {% if post.language and post.language != g.locale %}[m
+[32m+[m[32m                <br><br>[m
+[32m+[m[32m                <span id="translation{{ post.id }}">[m
+[32m+[m[32m                    <a href="javascript:translate([m
+[32m+[m[32m                                '#post{{ post.id }}',[m
+[32m+[m[32m                                '#translation{{ post.id }}',[m
+[32m+[m[32m                                '{{ post.language }}',[m
+[32m+[m[32m                                '{{ g.locale }}');">{{ _('Translate') }}</a>[m
+[32m+[m[32m                </span>[m
+[32m+[m[32m                {% endif %}[m
+[32m+[m[32m            </td>[m
+[32m+[m[32m        </tr>[m
+[32m+[m[32m    </table>[m
+\ No newline at end of file[m
+[1mdiff --git a/app/templates/_preview_blog_post.html b/app/templates/_preview_blog_post.html[m
+[1mindex 3a584a9..91dec0f 100644[m
+[1m--- a/app/templates/_preview_blog_post.html[m
+[1m+++ b/app/templates/_preview_blog_post.html[m
+[36m@@ -6,16 +6,16 @@[m
+ [m
+                 {% set user_link %}[m
+                     <span class="user_popup">[m
+[31m-                        <a href="{{ url_for('main.user', username=blog_post.blog_author.username) }}">[m
+[31m-                            {{ blog_post.blog_author.username }}[m
+[32m+[m[32m                        <a href="{{ url_for('main.user', username=current_user.username) }}">[m
+[32m+[m[32m                            {{ current_user.username }}[m
+                         </a>[m
+                     </span>[m
+                  {% endset %}[m
+                 <i>[m
+[31m-                    {{ _('Written by %(username)s on %(when)s', username=user_link, when=moment(blog_post.timestamp).format('MMMM Do YYYY')) }}:[m
+[32m+[m[32m                    {{ _('Written by %(username)s on %(when)s', username=user_link, when=moment().format('MMMM Do YYYY')) }}:[m
+                 </i>[m
+                 <br>[m
+[31m-                <span id="post{{ blog_post.id }}">{{ blog_post.content|markdown }}</span>[m
+[32m+[m[32m                <span id="preview">{{ blog_post.content | markdown }}</span>[m
+                 {% if blog_post.language and blog_post.language != g.locale %}[m
+                 <br><br>[m
+                 <span id="translation{{ blog_post.id }}">[m
+[1mdiff --git a/app/templates/_show_blog_post.html b/app/templates/_show_blog_post.html[m
+[1mindex f7e5884..3a584a9 100644[m
+[1m--- a/app/templates/_show_blog_post.html[m
+[1m+++ b/app/templates/_show_blog_post.html[m
+[36m@@ -1,10 +1,31 @@[m
+[31m-<!DOCTYPE html>[m
+[31m-<html lang="en">[m
+[31m-<head>[m
+[31m-    <meta charset="UTF-8">[m
+[31m-    <title>$Title$</title>[m
+[31m-</head>[m
+[31m-<body>[m
+[31m-$END$[m
+[31m-</body>[m
+[31m-</html>[m
+\ No newline at end of file[m
+[32m+[m[32m    <table class="table table-hover">[m
+[32m+[m[32m        <tr>[m
+[32m+[m[32m            <td>[m
+[32m+[m[32m                <h2>{{ blog_post.title }}</h2>[m
+[32m+[m[32m                <br>[m
+[32m+[m
+[32m+[m[32m                {% set user_link %}[m
+[32m+[m[32m                    <span class="user_popup">[m
+[32m+[m[32m                        <a href="{{ url_for('main.user', username=blog_post.blog_author.username) }}">[m
+[32m+[m[32m                            {{ blog_post.blog_author.username }}[m
+[32m+[m[32m                        </a>[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                 {% endset %}[m
+[32m+[m[32m                <i>[m
+[32m+[m[32m                    {{ _('Written by %(username)s on %(when)s', username=user_link, when=moment(blog_post.timestamp).format('MMMM Do YYYY')) }}:[m
+[32m+[m[32m                </i>[m
+[32m+[m[32m                <br>[m
+[32m+[m[32m                <span id="post{{ blog_post.id }}">{{ blog_post.content|markdown }}</span>[m
+[32m+[m[32m                {% if blog_post.language and blog_post.language != g.locale %}[m
+[32m+[m[32m                <br><br>[m
+[32m+[m[32m                <span id="translation{{ blog_post.id }}">[m
+[32m+[m[32m                    <a href="javascript:translate([m
+[32m+[m[32m                                '#post{{ blog_post.id }}',[m
+[32m+[m[32m                                '#translation{{ blog_post.id }}',[m
+[32m+[m[32m                                '{{ blog_post.language }}',[m
+[32m+[m[32m                                '{{ g.locale }}');">{{ _('Translate') }}</a>[m
+[32m+[m[32m                </span>[m
+[32m+[m[32m                {% endif %}[m
+[32m+[m[32m            </td>[m
+[32m+[m[32m        </tr>[m
+[32m+[m[32m    </table>[m
+\ No newline at end of file[m
+[1mdiff --git a/app/templates/base.html b/app/templates/base.html[m
+[1mindex 6459c80..6c0ac46 100644[m
+[1m--- a/app/templates/base.html[m
+[1m+++ b/app/templates/base.html[m
+[36m@@ -1,5 +1,12 @@[m
+ {% extends 'bootstrap/base.html' %}[m
+ [m
+[32m+[m[32m{% block metas %}[m
+[32m+[m[32m    <meta name="viewport" content="width=device-width, initial-scale=1.0">[m
+[32m+[m[32m    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML' async></script>[m
+[32m+[m
+[32m+[m[32m    <link rel="stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/codehilite.css') }}">[m
+[32m+[m[32m{% endblock %}[m
+[32m+[m
+ {% block title %}[m
+     {% if title %}{{ title }} - Microblog{% else %}[m
+     {{ _('Welcome to Microblog') }}[m
+[36m@@ -16,12 +23,26 @@[m
+                     <span class="icon-bar"></span>[m
+                     <span class="icon-bar"></span>[m
+                 </button>[m
+[31m-                <a class="navbar-brand" href="{{ url_for('main.index') }}">{{ _('Microblog') }}</a>[m
+[32m+[m[32m                <a class="navbar-brand" href="{{ url_for('main.index') }}">{{ _('NicoLife') }}</a>[m
+             </div>[m
+[32m+[m
+[32m+[m[32m            <!-- Adding dropdown menu[m
+[32m+[m[32m            <div class="dropdown">[m
+[32m+[m[32m                <button onclick="myDropdownFunction()" class="dropbtn">{{ _('More') }}</button>[m
+[32m+[m[32m                <div id="myDropdown" class="dropdown-content">[m
+[32m+[m[32m                    <a href="#programming">{{ _('Programming') }} </a>[m
+[32m+[m[32m                    <a href="#programming">{{ _('Quantitative finance') }}</a>[m
+[32m+[m[32m                    <a href="#machinelearning">{{ _('Statistics and Machine learning') }}</a>[m
+[32m+[m[32m                    <a href="#cryptocurrencies">{{ _('Crypto currencies') }}</a>[m
+[32m+[m[32m                    <a href="#about">{{ _('About the site') }}</a>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m            -->[m
+             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">[m
+                 <ul class="nav navbar-nav">[m
+                     <li><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>[m
+                     <li><a href="{{ url_for('main.explore') }}">{{ _('Explore') }}</a></li>[m
+[32m+[m[32m                    <li><a href="{{ url_for('blog.blog') }}">{{ _('Blog') }}</a></li>[m
+                 </ul>[m
+ [m
+                 {% if g.search_form %}[m
+[36m@@ -122,5 +143,24 @@[m
+             );[m
+         });[m
+ [m
+[31m-        </script>[m
+[32m+[m[32m            // Dropdown menu[m
+[32m+[m[32m            function myFunction() {[m
+[32m+[m[32m                document.getElementById("myDropdown").classList.toggle("Show");[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            window.onclick = function(event) {[m
+[32m+[m[32m                if (!even.target.matches('.dropbtn')) {[m
+[32m+[m[32m                    var dropdowns =[m
+[32m+[m[32m                        document.getElementsByClassName("dropdown-content");[m
+[32m+[m[32m                    var i;[m
+[32m+[m[32m                    for (i = 0; i < dropdowns.length; i++) {[m
+[32m+[m[32m                        var openDropdown = dropdowns[i];[m
+[32m+[m[32m                        if (openDropdown.classList.contains('show')) {[m
+[32m+[m[32m                            openDropdown.classList.remove('show');[m
+[32m+[m[32m                        }[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m    </script>[m
+ {% endblock %}[m
+\ No newline at end of file[m
+[1mdiff --git a/app/templates/blog/blog.html b/app/templates/blog/blog.html[m
+[1mindex f7e5884..4d60514 100644[m
+[1m--- a/app/templates/blog/blog.html[m
+[1m+++ b/app/templates/blog/blog.html[m
+[36m@@ -1,10 +1,22 @@[m
+[31m-<!DOCTYPE html>[m
+[31m-<html lang="en">[m
+[31m-<head>[m
+[31m-    <meta charset="UTF-8">[m
+[31m-    <title>$Title$</title>[m
+[31m-</head>[m
+[31m-<body>[m
+[31m-$END$[m
+[31m-</body>[m
+[31m-</html>[m
+\ No newline at end of file[m
+[32m+[m[32m{% extends "base.html" %}[m
+[32m+[m[32m{% import 'bootstrap/wtf.html' as wtf %}[m
+[32m+[m
+[32m+[m[32m{% block app_content %}[m
+[32m+[m[32m    {% for post in posts %}[m
+[32m+[m[32m        {% include '_blog_post.html' %}[m
+[32m+[m[32m    {% endfor %}[m
+[32m+[m[32m    <nav aria-label="...">[m
+[32m+[m[32m        <ul class="pager">[m
+[32m+[m[32m            <li class="previous{% if not prev_url %} disabled{% endif %}">[m
+[32m+[m[32m                <a href="{{ prev_url or '#' }}">[m
+[32m+[m[32m                    <span aria-hidden="true">&larr;</span> {{ _('Newer blog posts') }}[m
+[32m+[m[32m                </a>[m
+[32m+[m[32m            </li>[m
+[32m+[m[32m            <li class="next{% if not next_url %} disabled{% endif %}">[m
+[32m+[m[32m                <a href="{{ next_url or '#' }}">[m
+[32m+[m[32m                    {{ _('Older blog posts') }} <span aria-hidden="true">&rarr;</span>[m
+[32m+[m[32m                </a>[m
+[32m+[m[32m            </li>[m
+[32m+[m[32m        </ul>[m
+[32m+[m[32m    </nav>[m
+[32m+[m[32m{% endblock %}[m
+\ No newline at end of file[m
+[1mdiff --git a/app/templates/blog/blog_post.html b/app/templates/blog/blog_post.html[m
+[1mindex f7e5884..e84c0ea 100644[m
+[1m--- a/app/templates/blog/blog_post.html[m
+[1m+++ b/app/templates/blog/blog_post.html[m
+[36m@@ -1,10 +1,34 @@[m
+[31m-<!DOCTYPE html>[m
+[31m-<html lang="en">[m
+[31m-<head>[m
+[31m-    <meta charset="UTF-8">[m
+[31m-    <title>$Title$</title>[m
+[31m-</head>[m
+[31m-<body>[m
+[31m-$END$[m
+[31m-</body>[m
+[31m-</html>[m
+\ No newline at end of file[m
+[32m+[m[32m{% extends "base.html" %}[m
+[32m+[m[32m{% import 'bootstrap/wtf.html' as wtf %}[m
+[32m+[m
+[32m+[m[32m{% block headextra %}[m
+[32m+[m[32m    {{ pagedown.include_pagedown() }}[m
+[32m+[m[32m{% endblock %}[m
+[32m+[m
+[32m+[m[32m{% block app_content %}[m
+[32m+[m[32m    <h1>{{ _('Write a blog post') }}</h1>[m
+[32m+[m[32m    {% if form %}[m
+[32m+[m
+[32m+[m[32m    <!--[m
+[32m+[m[32m    {{ wtf.quick_form(form) }}[m
+[32m+[m[32m    <br>[m
+[32m+[m[32m    -->[m
+[32m+[m
+[32m+[m[32m    <form action method="post" class="form" role="form">[m
+[32m+[m[32m        {{ form.hidden_tag() }}[m
+[32m+[m[32m        {{ wtf.form_errors(form, hiddens="only") }}[m
+[32m+[m[32m        {{ wtf.form_field(form.title) }}[m
+[32m+[m[32m        {{ wtf.form_field(form.slug) }}[m
+[32m+[m[32m        {{ wtf.form_field(form.content)  }}[m
+[32m+[m[32m        {{ wtf.form_field(form.published) }}[m
+[32m+[m[32m        {{ wtf.form_field(form.submit) }}[m
+[32m+[m[32m        {{ wtf.form_field(form.preview) }}[m
+[32m+[m[32m    </form>[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    {% endif %}[m
+[32m+[m
+[32m+[m[32m    {% if preview %}[m
+[32m+[m[32m    {% include '_preview_blog_post.html' %}[m
+[32m+[m[32m    {% endif %}[m
+[32m+[m[32m{% endblock %}[m
+\ No newline at end of file[m
+[1mdiff --git a/app/templates/blog/show_blog_post.html b/app/templates/blog/show_blog_post.html[m
+[1mindex 051a403..6fb7f47 100644[m
+[1m--- a/app/templates/blog/show_blog_post.html[m
+[1m+++ b/app/templates/blog/show_blog_post.html[m
+[36m@@ -2,5 +2,31 @@[m
+ {% import 'bootstrap/wtf.html' as wtf %}[m
+ [m
+ {% block app_content %}[m
+[31m-    {% include '_show_blog_post.html' %}[m
+[31m-{% endblock %}[m
+\ No newline at end of file[m
+[32m+[m[32m{% include '_show_blog_post.html' %}[m
+[32m+[m[32m{% if posts %}[m
+[32m+[m[32m    <h4>{{ _('Comments') }}</h4>[m
+[32m+[m[32m    {% for post in posts %}[m
+[32m+[m[32m            {% include '_post.html' %}[m
+[32m+[m[32m    {% endfor %}[m
+[32m+[m[32m{% endif %}[m
+[32m+[m[32m<nav aria-label="...">[m
+[32m+[m[32m    <ul class="pager">[m
+[32m+[m[32m        <li class="previous{% if not prev_url %} disabled{% endif %}">[m
+[32m+[m[32m            <a href="{{ prev_url or '#' }}">[m
+[32m+[m[32m                <span aria-hidden="true">&larr;</span> {{ _('Newer posts') }}[m
+[32m+[m[32m            </a>[m
+[32m+[m[32m        </li>[m
+[32m+[m[32m        <li class="next{% if not next_url %} disabled{% endif %}">[m
+[32m+[m[32m            <a href="{{ next_url or '#' }}">[m
+[32m+[m[32m                {{ _('Older posts') }} <span aria-hidden="true">&rarr;</span>[m
+[32m+[m[32m            </a>[m
+[32m+[m[32m        </li>[m
+[32m+[m[32m    </ul>[m
+[32m+[m[32m</nav>[m
+[32m+[m
+[32m+[m[32m{% if form %}[m
+[32m+[m[32m    {{ wtf.quick_form(form) }}[m
+[32m+[m[32m    <br>[m
+[32m+[m[32m{% endif %}[m
+[32m+[m
+[32m+[m[32m{% endblock %}[m
+[1mdiff --git a/config.py b/config.py[m
+[1mindex 61c8b7c..c2ecc48 100644[m
+[1m--- a/config.py[m
+[1m+++ b/config.py[m
+[36m@@ -5,7 +5,7 @@[m [mbasedir = os.path.abspath(os.path.dirname(__file__))[m
+ load_dotenv(os.path.join(basedir, '.env')) #loading environmental files[m
+ [m
+ class Config(object):[m
+[31m-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'neverguessit'[m
+[32m+[m[32m    SECRET_KEY = os.environ.get('SECRET_KEY') or 'neverguessit lalalal yoyo mejeriprodukter ginsmagning'[m
+ [m
+     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \[m
+         'sqlite:///' + os.path.join(basedir, 'app.db')[m
+[36m@@ -16,18 +16,25 @@[m [mclass Config(object):[m
+     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None[m
+     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')[m
+     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')[m
+[31m-    ADMINS = ['your-email@example.com'][m
+[32m+[m[32m    ADMINS = ['nicolaj.schmit@gmail.com'][m
+ [m
+     POSTS_PER_PAGE = 5[m
+[32m+[m[32m    BLOG_POSTS_PER_PAGE = 5[m
+ [m
+     LANGUAGES = ['en', 'dk'] #pybabel languages supported[m
+ [m
+     MS_TRANSLATOR_KEY = os.environ.get('MS_TRANSLATOR_KEY') #Microsoft Azure text translator key[m
+[31m-    print(MS_TRANSLATOR_KEY)[m
+ [m
+[31m-    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') #Where is elastic search hosted[m
+[32m+[m[32m    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') #Where elastic search is hosted[m
+ [m
+     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')[m
+ [m
+[32m+[m[32m    # Flask-User settings[m
+[32m+[m[32m    USER_APP_NAME = "NicoWorld Flask App"  # Shown in and email templates and page footers[m
+[32m+[m[32m    USER_ENABLE_EMAIL = False  # Enable email authentication[m
+[32m+[m[32m    USER_ENABLE_USERNAME = False  # Disable username authentication[m
+[32m+[m[32m    USER_EMAIL_SENDER_NAME = USER_APP_NAME[m
+[32m+[m[32m    USER_EMAIL_SENDER_EMAIL = "noreply@example.com"[m
+[32m+[m
+ if __name__ == '__main__':[m
+     print(basedir)[m
+\ No newline at end of file[m
+[1mdiff --git a/microblog.py b/microblog.py[m
+[1mindex 1511738..7163579 100644[m
+[1m--- a/microblog.py[m
+[1m+++ b/microblog.py[m
+[36m@@ -1,9 +1,9 @@[m
+ from app import create_app, db, cli #import the Flask object called app from our app package ("Folder"). "cli" - run scripts to create, update and compile new languages[m
+[31m-from app.models import User, Post[m
+[32m+[m[32mfrom app.models import User, Post, BlogPost, Role[m
+ [m
+ app = create_app()[m
+ cli.register(app)[m
+ [m
+ @app.shell_context_processor[m
+ def make_shell_context(): #Make items available in the "flask shell" .[m
+[31m-    return {'db': db, 'User': User, 'Post': Post}[m
+\ No newline at end of file[m
+[32m+[m[32m    return {'db': db, 'User': User, 'Post': Post, 'BlogPost' : BlogPost, 'Role': Role}[m
+\ No newline at end of file[m
+[1mdiff --git a/migrations/versions/18f1e0d96311_new_fields_in_uer_model.py b/migrations/versions/18f1e0d96311_new_fields_in_uer_model.py[m
+[1mdeleted file mode 100644[m
+[1mindex 25bb6e3..0000000[m
+[1m--- a/migrations/versions/18f1e0d96311_new_fields_in_uer_model.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,30 +0,0 @@[m
+[31m-"""New fields in uer model[m
+[31m-[m
+[31m-Revision ID: 18f1e0d96311[m
+[31m-Revises: f9e5cf5f7863[m
+[31m-Create Date: 2018-04-11 15:42:30.559569[m
+[31m-[m
+[31m-"""[m
+[31m-from alembic import op[m
+[31m-import sqlalchemy as sa[m
+[31m-[m
+[31m-[m
+[31m-# revision identifiers, used by Alembic.[m
+[31m-revision = '18f1e0d96311'[m
+[31m-down_revision = 'f9e5cf5f7863'[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.add_column('user', sa.Column('about_me', sa.String(length=140), nullable=True))[m
+[31m-    op.add_column('user', sa.Column('last_seen', sa.DateTime(), nullable=True))[m
+[31m-    # ### end Alembic commands ###[m
+[31m-[m
+[31m-[m
+[31m-def downgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.drop_column('user', 'last_seen')[m
+[31m-    op.drop_column('user', 'about_me')[m
+[31m-    # ### end Alembic commands ###[m
+[1mdiff --git a/migrations/versions/5757a7a75aa0_creating_users_table.py b/migrations/versions/5757a7a75aa0_creating_users_table.py[m
+[1mdeleted file mode 100644[m
+[1mindex d0d6213..0000000[m
+[1m--- a/migrations/versions/5757a7a75aa0_creating_users_table.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,40 +0,0 @@[m
+[31m-"""Creating users table[m
+[31m-[m
+[31m-Revision ID: 5757a7a75aa0[m
+[31m-Revises: [m
+[31m-Create Date: 2018-04-11 13:14:01.793695[m
+[31m-[m
+[31m-"""[m
+[31m-from alembic import op[m
+[31m-import sqlalchemy as sa[m
+[31m-[m
+[31m-[m
+[31m-# revision identifiers, used by Alembic.[m
+[31m-revision = '5757a7a75aa0'[m
+[31m-down_revision = None[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.create_table('user',[m
+[31m-    sa.Column('id', sa.Integer(), nullable=False),[m
+[31m-    sa.Column('username', sa.String(length=64), nullable=True),[m
+[31m-    sa.Column('email', sa.String(length=120), nullable=True),[m
+[31m-    sa.Column('password_hash', sa.String(length=128), nullable=True),[m
+[31m-    sa.PrimaryKeyConstraint('id')[m
+[31m-    )[m
+[31m-    op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)[m
+[31m-    op.create_index(op.f('ix_user_id'), 'user', ['id'], unique=False)[m
+[31m-    op.create_index(op.f('ix_user_username'), 'user', ['username'], unique=True)[m
+[31m-    # ### end Alembic commands ###[m
+[31m-[m
+[31m-[m
+[31m-def downgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.drop_index(op.f('ix_user_username'), table_name='user')[m
+[31m-    op.drop_index(op.f('ix_user_id'), table_name='user')[m
+[31m-    op.drop_index(op.f('ix_user_email'), table_name='user')[m
+[31m-    op.drop_table('user')[m
+[31m-    # ### end Alembic commands ###[m
+[1mdiff --git a/migrations/versions/648350304e48_add_language_to_posts.py b/migrations/versions/648350304e48_add_language_to_posts.py[m
+[1mdeleted file mode 100644[m
+[1mindex 9fa2916..0000000[m
+[1m--- a/migrations/versions/648350304e48_add_language_to_posts.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,28 +0,0 @@[m
+[31m-"""Add language to posts[m
+[31m-[m
+[31m-Revision ID: 648350304e48[m
+[31m-Revises: f7f72dce7903[m
+[31m-Create Date: 2018-04-12 13:01:04.151174[m
+[31m-[m
+[31m-"""[m
+[31m-from alembic import op[m
+[31m-import sqlalchemy as sa[m
+[31m-[m
+[31m-[m
+[31m-# revision identifiers, used by Alembic.[m
+[31m-revision = '648350304e48'[m
+[31m-down_revision = 'f7f72dce7903'[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.add_column('post', sa.Column('language', sa.String(length=5), nullable=True))[m
+[31m-    # ### end Alembic commands ###[m
+[31m-[m
+[31m-[m
+[31m-def downgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.drop_column('post', 'language')[m
+[31m-    # ### end Alembic commands ###[m
+[1mdiff --git a/migrations/versions/f7f72dce7903_followers.py b/migrations/versions/f7f72dce7903_followers.py[m
+[1mdeleted file mode 100644[m
+[1mindex 07078a9..0000000[m
+[1m--- a/migrations/versions/f7f72dce7903_followers.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,33 +0,0 @@[m
+[31m-"""followers[m
+[31m-[m
+[31m-Revision ID: f7f72dce7903[m
+[31m-Revises: 18f1e0d96311[m
+[31m-Create Date: 2018-04-11 22:02:35.665082[m
+[31m-[m
+[31m-"""[m
+[31m-from alembic import op[m
+[31m-import sqlalchemy as sa[m
+[31m-[m
+[31m-[m
+[31m-# revision identifiers, used by Alembic.[m
+[31m-revision = 'f7f72dce7903'[m
+[31m-down_revision = '18f1e0d96311'[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.create_table('followers',[m
+[31m-    sa.Column('follower_id', sa.Integer(), nullable=True),[m
+[31m-    sa.Column('followed_id', sa.Integer(), nullable=True),[m
+[31m-    sa.ForeignKeyConstraint(['followed_id'], ['user.id'], ),[m
+[31m-    sa.ForeignKeyConstraint(['follower_id'], ['user.id'], )[m
+[31m-    )[m
+[31m-    # ### end Alembic commands ###[m
+[31m-[m
+[31m-[m
+[31m-def downgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.drop_table('followers')[m
+[31m-    # ### end Alembic commands ###[m
+[1mdiff --git a/migrations/versions/f9e5cf5f7863_creating_posts_table.py b/migrations/versions/f9e5cf5f7863_creating_posts_table.py[m
+[1mdeleted file mode 100644[m
+[1mindex 84a53cf..0000000[m
+[1m--- a/migrations/versions/f9e5cf5f7863_creating_posts_table.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,37 +0,0 @@[m
+[31m-"""Creating posts table[m
+[31m-[m
+[31m-Revision ID: f9e5cf5f7863[m
+[31m-Revises: 5757a7a75aa0[m
+[31m-Create Date: 2018-04-11 13:27:07.660188[m
+[31m-[m
+[31m-"""[m
+[31m-from alembic import op[m
+[31m-import sqlalchemy as sa[m
+[31m-[m
+[31m-[m
+[31m-# revision identifiers, used by Alembic.[m
+[31m-revision = 'f9e5cf5f7863'[m
+[31m-down_revision = '5757a7a75aa0'[m
+[31m-branch_labels = None[m
+[31m-depends_on = None[m
+[31m-[m
+[31m-[m
+[31m-def upgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.create_table('post',[m
+[31m-    sa.Column('id', sa.Integer(), nullable=False),[m
+[31m-    sa.Column('body', sa.String(length=140), nullable=True),[m
+[31m-    sa.Column('timestamp', sa.DateTime(), nullable=True),[m
+[31m-    sa.Column('user_id', sa.Integer(), nullable=True),[m
+[31m-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),[m
+[31m-    sa.PrimaryKeyConstraint('id')[m
+[31m-    )[m
+[31m-    op.create_index(op.f('ix_post_timestamp'), 'post', ['timestamp'], unique=False)[m
+[31m-    # ### end Alembic commands ###[m
+[31m-[m
+[31m-[m
+[31m-def downgrade():[m
+[31m-    # ### commands auto generated by Alembic - please adjust! ###[m
+[31m-    op.drop_index(op.f('ix_post_timestamp'), table_name='post')[m
+[31m-    op.drop_table('post')[m
+[31m-    # ### end Alembic commands ###[m

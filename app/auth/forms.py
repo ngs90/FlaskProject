@@ -4,6 +4,7 @@ from wtforms.validators import (ValidationError, DataRequired, Email, EqualTo)
 from app.models import User
 from flask_babel import _, lazy_gettext as _l
 
+
 class LoginForm(FlaskForm):
     username = StringField(_l('Username'), validators=[DataRequired()])
     password = PasswordField(_l('Password'), validators=[DataRequired()])
@@ -18,7 +19,7 @@ class RegistrationForm(FlaskForm):
     password2 = PasswordField(_l('Repeat Password'), validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField(_l('Register'))
 
-    def validate_username(self, username): #names that starts with validate_<field_name> are invoked as additional validators by the WTForms
+    def validate_username(self, username):  # Names that starts with validate_<field_name> are invoked as additional validators by the WTForms
         user = User.query.filter_by(username=username.data).first()
         if user is not None:
             raise ValidationError(_('Please use a different username.'))
@@ -39,3 +40,4 @@ class ResetPasswordForm(FlaskForm):
     password2 = PasswordField(
         _l('Repeat Password'), validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField(_l('Request Password Reset'))
+

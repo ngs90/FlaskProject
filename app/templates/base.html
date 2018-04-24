@@ -1,5 +1,12 @@
 {% extends 'bootstrap/base.html' %}
 
+{% block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+
+    <link rel="stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/codehilite.css') }}">
+{% endblock %}
+
 {% block title %}
     {% if title %}{{ title }} - Microblog{% else %}
     {{ _('Welcome to Microblog') }}
@@ -16,12 +23,26 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="{{ url_for('main.index') }}">{{ _('Microblog') }}</a>
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">{{ _('NicoLife') }}</a>
             </div>
+
+            <!-- Adding dropdown menu
+            <div class="dropdown">
+                <button onclick="myDropdownFunction()" class="dropbtn">{{ _('More') }}</button>
+                <div id="myDropdown" class="dropdown-content">
+                    <a href="#programming">{{ _('Programming') }} </a>
+                    <a href="#programming">{{ _('Quantitative finance') }}</a>
+                    <a href="#machinelearning">{{ _('Statistics and Machine learning') }}</a>
+                    <a href="#cryptocurrencies">{{ _('Crypto currencies') }}</a>
+                    <a href="#about">{{ _('About the site') }}</a>
+                </div>
+            </div>
+            -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
                     <li><a href="{{ url_for('main.explore') }}">{{ _('Explore') }}</a></li>
+                    <li><a href="{{ url_for('blog.blog') }}">{{ _('Blog') }}</a></li>
                 </ul>
 
                 {% if g.search_form %}
@@ -122,5 +143,24 @@
             );
         });
 
-        </script>
+            // Dropdown menu
+            function myFunction() {
+                document.getElementById("myDropdown").classList.toggle("Show");
+            }
+
+            window.onclick = function(event) {
+                if (!even.target.matches('.dropbtn')) {
+                    var dropdowns =
+                        document.getElementsByClassName("dropdown-content");
+                    var i;
+                    for (i = 0; i < dropdowns.length; i++) {
+                        var openDropdown = dropdowns[i];
+                        if (openDropdown.classList.contains('show')) {
+                            openDropdown.classList.remove('show');
+                        }
+                    }
+                }
+            }
+
+    </script>
 {% endblock %}

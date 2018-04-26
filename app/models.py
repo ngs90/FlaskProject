@@ -54,8 +54,7 @@ followers = db.Table('followers',
 def role_required(*role_args):
     def wrapper(f):
         @wraps(f)
-        def decorated_view(*args,**kwargs):
-            print('Checking user roles')
+        def decorated_view(*args, **kwargs):
             role = [str(x) for x in current_user.get_role()]
             for role_arg in role_args:
                 if str(role_arg) not in role:
@@ -161,8 +160,8 @@ class BlogPost(db.Model):
     __searchable__ = ['content']
     __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(250))
-    slug = db.Column(db.String(250))
+    title = db.Column(db.String(250), unique=True)
+    slug = db.Column(db.String(250), unique=True)
     content = db.Column(db.String(250))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Foreign key in the user table.
     blog_comment = db.relationship('Post', backref='blog_post', lazy='dynamic') #NOTICE! that the class-tabel BlogPost in the Foreign key statement is referred to as blog_post, i.e. capital letters after first is convert to _lowercase and initial letter is converted to lowercase (without the underscore)

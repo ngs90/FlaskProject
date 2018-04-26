@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import (StringField, PasswordField, BooleanField, SubmitField)
 from wtforms.validators import (ValidationError, DataRequired, Email, EqualTo)
 from app.models import User
@@ -17,6 +17,7 @@ class RegistrationForm(FlaskForm):
     email = StringField(_l('Email'), validators=[DataRequired(), Email()])
     password = PasswordField(_l('Password'), validators=[DataRequired()])
     password2 = PasswordField(_l('Repeat Password'), validators=[DataRequired(), EqualTo('password')])
+    recapcha = RecaptchaField()
     submit = SubmitField(_l('Register'))
 
     def validate_username(self, username):  # Names that starts with validate_<field_name> are invoked as additional validators by the WTForms

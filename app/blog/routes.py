@@ -24,13 +24,14 @@ def blog_post():
             language = guess_language(form.content.data)
             if language == 'UNKNOWN' or len(language) > 5:
                 language = ''
-            print('current user is:',current_user)
             post = BlogPost(title=form.title.data,
                             slug=form.slug.data,
                             content=form.content.data,
                             blog_author=current_user,
-                            language=language)
-            print(post)
+                            language=language,
+                            published=form.published.data
+                            )
+
             db.session.add(post)
             db.session.commit()
             flash(_('Your blog post is now live!'))
@@ -43,24 +44,81 @@ def blog_post():
                                    blog_post=form.data
                                    )
 
+    return render_template('blog/blog_post.html',
+                           title='Blog Posts',
+                           form=form)
 
-    #page = request.args.get('page', 1, type=int)
-    #posts = current_user.followed_posts().paginate(
-    #    page, current_app.config['POSTS_PER_PAGE'], False)
-    #next_url = url_for('main.index', page=posts.next_num) \
-    #    if posts.has_next else None
-    #prev_url = url_for('main.index', page=posts.prev_num) \
-    #    if posts.has_prev else None
+
+@bp.route('/<slug>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('admin', 'user')
+def edit_blog_post(slug):
+    post = BlogPost.query.filter_by(slug=slug).first()
+    #form = BlogPostForm()
+    form = BlogPostForm(obj=post)
+
+
+
+    if form.validate_on_submit():
+        if form.submit.data:
+            language = guess_language(form.content.data)
+            if language == 'UNKNOWN' or len(language) > 5:
+                language = ''
+            #updated_post = BlogPost(title=form.title.data,
+            #                slug=form.slug.data,
+            #                content=form.content.data,
+            #                blog_author=current_user,
+            #                language=language,
+            #                published=form.published.data
+            #                )
+
+
+            # Updating the blog post fields based on the submitted form
+            post.title = form.title.data
+            post.slug = form.slug.data
+            post.content = form.content.data
+            post.blog_author = current_user
+            post.language = language
+            post.published = form.published.data
+            db.session.commit()
+            flash(_('The blog has been edited!'))
+            return redirect(url_for('blog.blog'))
+        elif form.preview.data:
+            return render_template('blog/blog_post.html',
+                                   title='Blog Posts',
+                                   form=form,
+                                   preview=True,
+                                   blog_post=form.data
+                                   )
 
     return render_template('blog/blog_post.html',
                            title='Blog Posts',
                            form=form)
 
+
 @bp.route('/', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def blog():
     page = request.args.get('page', 1, type=int)
-    posts = BlogPost.query.order_by(BlogPost.timestamp.desc()).paginate(
+    posts = BlogPost.query.filter_by(published=True).order_by(BlogPost.timestamp.desc()).paginate(
+        page, current_app.config['BLOG_POSTS_PER_PAGE'], False)
+    next_url = url_for('blog.blog', page=posts.next_num) \
+        if posts.has_next else None
+    prev_url = url_for('blog.blog', page=posts.prev_num) \
+        if posts.has_prev else None
+    return render_template('blog/blog.html',
+                           title='Blog',
+                           posts=posts.items,
+                           next_url=next_url,
+                           prev_url=prev_url)
+
+
+@bp.route('/not_published', methods=['GET', 'POST'])
+@login_required
+@role_required('admin', 'user')
+def blog_not_published():
+    page = request.args.get('page', 1, type=int)
+    posts = BlogPost.query.filter_by(published=False).order_by(BlogPost.timestamp.desc()).paginate(
         page, current_app.config['BLOG_POSTS_PER_PAGE'], False)
     next_url = url_for('blog.blog', page=posts.next_num) \
         if posts.has_next else None
@@ -74,9 +132,9 @@ def blog():
 
 
 @bp.route('/<slug>', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def show_blog_post(slug):
-    blog_post = BlogPost.query.filter_by(slug=slug).first()
+    blog_post = BlogPost.query.filter_by(slug=slug).filter_by(published=True).first()
     page = request.args.get('page', 1, type=int)
     comments = Post.query.filter_by(blogpost_id=blog_post.id).order_by(Post.timestamp.desc()).paginate(
             page, current_app.config['POSTS_PER_PAGE'], False)
@@ -96,7 +154,7 @@ def show_blog_post(slug):
                     blogpost_id=blog_post.id)
         db.session.add(post)
         db.session.commit()
-        flash(_('Your blog post has been added.'))
+        #flash(_('Your comment has been added.'))
         return redirect(url_for('blog.show_blog_post', slug=slug))
 
     return render_template('blog/show_blog_post.html',

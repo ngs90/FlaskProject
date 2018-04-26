@@ -2,7 +2,13 @@ import os
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, '.env')) #loading environmental files
+load_dotenv(os.path.join(basedir, 'config.env')) #loading environmental files
+
+print('The base directory is:')
+print(basedir)
+print(os.path.join(basedir, 'config.env'))
+
+
 
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'neverguessit lalalal yoyo mejeriprodukter ginsmagning'
@@ -35,6 +41,10 @@ class Config(object):
     USER_ENABLE_USERNAME = False  # Disable username authentication
     USER_EMAIL_SENDER_NAME = USER_APP_NAME
     USER_EMAIL_SENDER_EMAIL = "noreply@example.com"
+
+    RECAPTCHA_PUBLIC_KEY= os.environ.get('RECAPTCHA_PUBLIC_KEY')
+    RECAPTCHA_PRIVATE_KEY= os.environ.get('RECAPTCHA_PRIVATE_KEY')
+
 
 if __name__ == '__main__':
     print(basedir)
